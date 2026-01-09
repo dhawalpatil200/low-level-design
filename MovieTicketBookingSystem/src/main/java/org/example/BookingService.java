@@ -29,6 +29,11 @@ public class BookingService {
     }
 
     public BookingSession selectSeat(Screening screening, Seat seat) {
+        ScreeningSeat ss = screening.getScreeningSeat(seat.getSeatNumber());
+        boolean held = ss.hold(5);
+        if(!held) {
+            throw new RuntimeException("Seat already taken");
+        }
         return new BookingSession(screening, seat);
     }
 
@@ -39,7 +44,12 @@ public class BookingService {
         if (!paymentService.pay(price)) {
             throw new RuntimeException("Payment failed");
         }
-        screeningManager.markSeatBooked(screening, seat);
+        ScreeningSeat ss = screening.getScreeningSeat(seat.getSeatNumber());
+        boolean confirmed = ss.confirmBooking();
+        if(!confirmed) {
+            throw new RuntimeException("Seat hold expired");
+        }
+
         return new Ticket(screening, seat, price);
     }
 }
