@@ -8,7 +8,7 @@ import org.example.entities.ElevatorStatus;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ElevatorSystem {
+public class ElevatorSystem implements ElevatorObserver{
     private final List<ElevatorCar> elevators;
     private final ElevatorDispatch elevatorDispatcher;
 
@@ -31,5 +31,10 @@ public class ElevatorSystem {
 
     public void selectFloor(ElevatorCar car, int destinationFloor) {
         car.addFloorRequest(destinationFloor);
+    }
+
+    @Override
+    public void update(int floor, Direction direction) {
+        requestElevator(floor, direction);
     }
 }
