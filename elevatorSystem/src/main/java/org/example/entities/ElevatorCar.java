@@ -2,10 +2,12 @@ package org.example.entities;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.UUID;
 
 public class ElevatorCar {
 
     private final ElevatorStatus status;
+    private String id;
 
     // Floors above current floor → lowest first
     private final PriorityQueue<Integer> upQueue =
@@ -17,6 +19,12 @@ public class ElevatorCar {
 
     public ElevatorCar(int startingFloor) {
         this.status = new ElevatorStatus(startingFloor, Direction.IDLE);
+        id = Integer.toString(startingFloor);
+        System.out.println(String.format("[INIT_ELEVATOR][floor=%s][id=%s]", status.getCurrentFloor(), id));
+    }
+
+    public String getId() {
+        return id;
     }
 
     public ElevatorStatus getStatus() {

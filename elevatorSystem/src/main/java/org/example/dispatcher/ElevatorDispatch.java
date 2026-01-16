@@ -14,6 +14,7 @@ public class ElevatorDispatch {
 
     public void dispatchElevatorCar(int floor, Direction direction, List<ElevatorCar> elevators) {
         ElevatorCar selectedElevator = strategy.selectElevator(elevators, floor, direction);
+        System.out.println(String.format("[floor=%s][direction=%s][elevator=%s]", floor, direction, selectedElevator.getId()));
         if(selectedElevator != null) {
             selectedElevator.addFloorRequest(floor);
         }
