@@ -1,14 +1,20 @@
 package org.example.entities;
 
 public class BookingSession {
-    private Screening screening;
-    private Seat seat;
+    private final Screening screening;
+    private final Seat seat;
+    private final String holdToken;
 
-    public BookingSession(Screening screening, Seat seat) {
+    public BookingSession(Screening screening, Seat seat, String token) {
         this.screening = screening;
         this.seat = seat;
+        this.holdToken = token;
     }
 
     public Screening getScreening() { return screening; }
     public Seat getSeat() { return seat; }
+
+    public String getHoldToken() {
+        return holdToken;
+    }
 }
