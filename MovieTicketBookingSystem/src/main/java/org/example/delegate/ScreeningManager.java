@@ -8,11 +8,9 @@ import java.util.stream.Collectors;
 
 public class ScreeningManager {
     private Map<Movie, List<Screening>> screeningsByMovie;
-    private Map<Screening, Set<Seat>> bookedSeatsByScreening;
 
     public ScreeningManager() {
         this.screeningsByMovie = new HashMap<>();
-        this.bookedSeatsByScreening = new HashMap<>();
     }
 
     public void addScreening(Movie movie, Screening screening) {
@@ -34,14 +32,6 @@ public class ScreeningManager {
     }
 
     public List<Seat> getAvailableSeats(Screening screening) {
-        List<Seat> allSeats = screening.getRoom().getLayout().getAllSeats();
-        Set<Seat> bookedSeats = bookedSeatsByScreening.getOrDefault(screening, Set.of());
-        return allSeats.stream().filter(s -> !bookedSeats.contains(s)).toList();
-    }
-
-    public void markSeatBooked(Screening screening, Seat seat) {
-        bookedSeatsByScreening
-            .computeIfAbsent(screening, k -> new HashSet<>())
-            .add(seat);
+        return screening.getAvailableSeats();
     }
 }
