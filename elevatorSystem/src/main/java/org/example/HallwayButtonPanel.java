@@ -2,15 +2,16 @@ package org.example;
 
 import org.example.entities.Direction;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HallwayButtonPanel implements HallwayPanelSubject{
     private final int floor;
-    private final List<ElevatorObserver> observers;
+    private List<ElevatorObserver> observers;
 
-    public HallwayButtonPanel(int floor, List<ElevatorObserver> observers) {
+    public HallwayButtonPanel(int floor) {
         this.floor = floor;
-        this.observers = observers;
+        observers = new ArrayList<>();
     }
 
     public void pressButton(Direction direction) {

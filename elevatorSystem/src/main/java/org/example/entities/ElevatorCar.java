@@ -1,45 +1,152 @@
 package org.example.entities;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.UUID;
 
 public class ElevatorCar {
-    private ElevatorStatus status;
-    private final Queue<Integer> targetFloors;
+
+    private final ElevatorStatus status;
+    private String id;
+
+    // Floors above current floor → lowest first
+    private final PriorityQueue<Integer> upQueue =
+            new PriorityQueue<>();
+
+    // Floors below current floor → highest first
+    private final PriorityQueue<Integer> downQueue =
+            new PriorityQueue<>(Comparator.reverseOrder());
 
     public ElevatorCar(int startingFloor) {
         this.status = new ElevatorStatus(startingFloor, Direction.IDLE);
-        this.targetFloors = new LinkedList<>();
+        id = Integer.toString(startingFloor);
+        System.out.println(String.format("[INIT_ELEVATOR][floor=%s][id=%s]", status.getCurrentFloor(), id));
+    }
+
+    public String getId() {
+        return id;
     }
 
     public ElevatorStatus getStatus() {
         return status;
     }
 
-    public Direction getCurrentDirection() {
-        return status.getDirection();
-    }
-
     public int getCurrentFloor() {
         return status.getCurrentFloor();
     }
 
-    public void addFloorRequest(int floor) {
-        if(!targetFloors.contains(floor)) {
-            targetFloors.offer(floor);
-            updateDirection(floor);
-        }
+    public Direction getCurrentDirection() {
+        return status.getDirection();
     }
 
     public boolean isIdle() {
-        return targetFloors.isEmpty();
+        return upQueue.isEmpty() && downQueue.isEmpty();
     }
 
-    private void updateDirection(int targetFloor) {
-        if(status.getCurrentFloor() < targetFloor) {
-            status = new ElevatorStatus(status.getCurrentFloor(), Direction.UP);
-        } else if(status.getCurrentFloor() > targetFloor) {
-            status = new ElevatorStatus(status.getCurrentFloor(), Direction.DOWN);
+    /**
+     * Adds a new floor request into appropriate queue.
+     */
+    public synchronized void addFloorRequest(int floor) {
+
+        int current = status.getCurrentFloor();
+
+        if (floor == current) {
+            return; // already here
+        }
+
+        if (floor > current) {
+            upQueue.offer(floor);
+        } else {
+            downQueue.offer(floor);
+        }
+
+        updateDirectionIfIdle();
+    }
+
+    /**
+     * Simulates one movement tick of the elevator.
+     * Should be called by scheduler periodically.
+     */
+    public synchronized void step() {
+
+        if (isIdle()) {
+            status.setDirection(Direction.IDLE);
+            return;
+        }
+
+        updateDirectionIfNeeded();
+
+        int current = status.getCurrentFloor();
+
+        if (status.getDirection() == Direction.UP) {
+            moveUp(current);
+        }
+        else if (status.getDirection() == Direction.DOWN) {
+            moveDown(current);
+        }
+    }
+
+    // ------------------ Internal helpers -----------------------
+
+    private void moveUp(int current) {
+        int nextTarget = upQueue.peek();
+
+        if (current < nextTarget) {
+            status.setCurrentFloor(current + 1);
+        }
+
+        if (status.getCurrentFloor() == nextTarget) {
+            upQueue.poll(); // reached target
+        }
+    }
+
+    private void moveDown(int current) {
+        int nextTarget = downQueue.peek();
+
+        if (current > nextTarget) {
+            status.setCurrentFloor(current - 1);
+        }
+
+        if (status.getCurrentFloor() == nextTarget) {
+            downQueue.poll(); // reached target
+        }
+    }
+
+    /**
+     * If elevator was IDLE, decide initial direction.
+     */
+    private void updateDirectionIfIdle() {
+        if (status.getDirection() != Direction.IDLE) {
+            return;
+        }
+
+        if (!upQueue.isEmpty()) {
+            status.setDirection(Direction.UP);
+        }
+        else if (!downQueue.isEmpty()) {
+            status.setDirection(Direction.DOWN);
+        }
+    }
+
+    /**
+     * Handles direction switching when current queue becomes empty.
+     */
+    private void updateDirectionIfNeeded() {
+
+        if (status.getDirection() == Direction.UP && upQueue.isEmpty()) {
+            if (!downQueue.isEmpty()) {
+                status.setDirection(Direction.DOWN);
+            } else {
+                status.setDirection(Direction.IDLE);
+            }
+        }
+
+        else if (status.getDirection() == Direction.DOWN && downQueue.isEmpty()) {
+            if (!upQueue.isEmpty()) {
+                status.setDirection(Direction.UP);
+            } else {
+                status.setDirection(Direction.IDLE);
+            }
         }
     }
 }
