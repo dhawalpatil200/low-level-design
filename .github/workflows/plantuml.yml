@@ -1,0 +1,51 @@
+# Generate SVG from PlantUML (.puml) files in docs/**/diagrams/
+# Scans any path matching docs/*/diagrams/*.puml (e.g. awesomeLLDProblems/docs/...).
+
+name: Generate PlantUML diagrams
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '**/docs/**/*.puml'
+      - '.github/workflows/plantuml.yml'
+  workflow_dispatch: # Allow manual run
+
+jobs:
+  plantuml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml graphviz
+
+      - name: Find and generate SVG from .puml files
+        run: |
+          find . -path '*/docs/*/diagrams/*.puml' -type f | while read -r puml; do
+            dir=$(dirname "$puml")
+            (cd "$dir" && plantuml -tsvg -nometadata "$(basename "$puml")")
+          done
+
+      - name: Commit and push generated SVGs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '**/diagrams/*.svg'
+          if git diff --staged --quiet; then
+            echo "No SVG changes to commit."
+          else
+            git commit -m "chore(docs): regenerate PlantUML SVG diagrams"
+            git push
+          fi
