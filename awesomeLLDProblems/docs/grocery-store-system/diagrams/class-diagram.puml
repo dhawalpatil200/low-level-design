@@ -1,0 +1,96 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+class Item {
+  - name : String
+  - barcode : String
+  - category : String
+  - price : BigDecimal
+  + getName() : String
+  + getBarcode() : String
+  + getCategory() : String
+  + getPrice() : BigDecimal
+  + setPrice(BigDecimal) : void
+}
+
+class Catalog {
+  - items : Map<String, Item>
+  + updateItem(Item) : void
+  + getItem(String) : Item
+  + removeItem(String) : void
+}
+
+class Inventory {
+  - stock : Map<String, Integer>
+  + addStock(String, int) : void
+  + reduceStock(String, int) : void
+  + getStock(String) : int
+}
+
+class OrderItem {
+  - item : Item
+  - quantity : int
+  + calculatePrice() : BigDecimal
+  + calculatePriceWithDiscount(DiscountCampaign) : BigDecimal
+}
+
+class Order {
+  - orderId : String
+  - items : List<OrderItem>
+  - applicableDiscounts : Map<OrderItem, DiscountCampaign>
+  - paymentAmount : BigDecimal
+  + addItem(OrderItem) : void
+  + calculateSubtotal() : BigDecimal
+  + calculateTotal() : BigDecimal
+  + applyDiscount(OrderItem, DiscountCampaign) : void
+  + calculateChange() : BigDecimal
+  + getOrderId() : String
+  + getPaymentAmount() : BigDecimal
+  + setPaymentAmount(BigDecimal) : void
+  + getApplicableDiscounts() : Map<OrderItem, DiscountCampaign>
+}
+
+' ========== Discount (Criteria + Strategy) ==========
+interface DiscountCriteria {
+  + isApplicable(Item) : boolean
+}
+
+interface DiscountCalculationStrategy {
+  + calculateDiscountedPrice(BigDecimal) : BigDecimal
+}
+
+class DiscountCampaign {
+  - discountId : String
+  - name : String
+  - discountCriteria : DiscountCriteria
+  - discountCalculationStrategy : DiscountCalculationStrategy
+  + isApplicable(Item) : boolean
+  + calculateDiscount(OrderItem) : BigDecimal
+}
+
+class Checkout {
+  - currentOrder : Order
+  - activeDiscounts : List<DiscountCampaign>
+  + startNewOrder() : void
+  + addItemToOrder(Item, int) : void
+}
+
+' ========== Relationships ==========
+Catalog o-- "0..*" Item : items by barcode
+
+OrderItem "1" *-- "1" Item : item
+Order "1" *-- "0..*" OrderItem : items
+Order ..> "0..*" DiscountCampaign : applicableDiscounts
+
+DiscountCampaign o-- "1" DiscountCriteria : criteria
+DiscountCampaign o-- "1" DiscountCalculationStrategy : strategy
+
+Checkout o-- "1" Order : currentOrder
+Checkout o-- "0..*" DiscountCampaign : activeDiscounts
+
+OrderItem ..> DiscountCampaign : calculatePriceWithDiscount
+
+@enduml
