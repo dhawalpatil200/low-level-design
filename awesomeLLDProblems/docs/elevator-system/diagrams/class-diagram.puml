@@ -1,4 +1,4 @@
-@startuml ElevatorSystem
+@startuml
 
 skinparam classAttributeIconSize 0
 skinparam classFontStyle bold
