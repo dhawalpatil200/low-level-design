@@ -1,0 +1,98 @@
+@startuml ElevatorSystem
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+enum Direction {
+  UP
+  DOWN
+  IDLE
+}
+
+class ElevatorStatus {
+  - currentFloor : int
+  - direction : Direction
+  + getCurrentFloor() : int
+  + setCurrentFloor(int) : void
+  + getDirection() : Direction
+  + setDirection(Direction) : void
+}
+
+class ElevatorCar {
+  - status : ElevatorStatus
+  - id : String
+  - upQueue : PriorityQueue<Integer>
+  - downQueue : PriorityQueue<Integer>
+  + getCurrentFloor() : int
+  + getCurrentDirection() : Direction
+  + getStatus() : ElevatorStatus
+  + isIdle() : boolean
+  + addFloorRequest(int) : void
+  + step() : void
+}
+
+' ========== Dispatcher (Strategy) ==========
+interface DispatchingStrategy {
+  + selectElevator(List<ElevatorCar>, int, Direction) : ElevatorCar
+}
+
+class FirstComeFirstServeStrategy {
+  + selectElevator(List<ElevatorCar>, int, Direction) : ElevatorCar
+}
+
+class ShortestSeekTimeFirstStrategy {
+  + selectElevator(List<ElevatorCar>, int, Direction) : ElevatorCar
+}
+
+class ElevatorDispatch {
+  - strategy : DispatchingStrategy
+  + dispatchElevatorCar(int, Direction, List<ElevatorCar>) : void
+}
+
+' ========== Observer ==========
+interface ElevatorObserver {
+  + update(int, Direction) : void
+}
+
+interface HallwayPanelSubject {
+  + addObserver(ElevatorObserver) : void
+  + removeObserver(ElevatorObserver) : void
+  + notifyObservers(Direction) : void
+}
+
+class HallwayButtonPanel {
+  - floor : int
+  - observers : List<ElevatorObserver>
+  + pressButton(Direction) : void
+  + addObserver(ElevatorObserver) : void
+  + removeObserver(ElevatorObserver) : void
+  + notifyObservers(Direction) : void
+}
+
+class ElevatorSystem {
+  - elevators : List<ElevatorCar>
+  - elevatorDispatcher : ElevatorDispatch
+  + requestElevator(int, Direction) : void
+  + selectFloor(ElevatorCar, int) : void
+  + getAllElevatorStatuses() : List<ElevatorStatus>
+  + update(int, Direction) : void
+}
+
+' ========== Relationships ==========
+ElevatorStatus "1" *-- "1" Direction
+ElevatorCar "1" *-- "1" ElevatorStatus : has
+
+DispatchingStrategy <|.. FirstComeFirstServeStrategy
+DispatchingStrategy <|.. ShortestSeekTimeFirstStrategy
+ElevatorDispatch o-- DispatchingStrategy : strategy
+ElevatorDispatch ..> ElevatorCar : selects
+
+HallwayPanelSubject <|.. HallwayButtonPanel
+ElevatorObserver <|.. ElevatorSystem
+HallwayButtonPanel o-- "0..*" ElevatorObserver : observers
+
+ElevatorSystem o-- "1..*" ElevatorCar : elevators
+ElevatorSystem o-- ElevatorDispatch : elevatorDispatcher
+
+@enduml
