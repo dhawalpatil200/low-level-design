@@ -1,0 +1,109 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+enum FileAttribute {
+  IS_DIRECTORY
+  SIZE
+  OWNER
+  FILENAME
+}
+
+class File {
+  - isDirectory : boolean
+  - size : int
+  - owner : String
+  - fileName : String
+  - entries : Set<File>
+  + extract(FileAttribute) : Object
+  + getEntries() : Set<File>
+  + getFileName() : String
+}
+
+' ========== Predicates ==========
+interface Predicate {
+  + isMatch(File) : boolean
+}
+
+interface CompositePredicate {
+}
+
+class SimplePredicate<T> {
+  - attributeName : FileAttribute
+  - operator : ComparisonOperator<T>
+  - expectedValue : T
+  + isMatch(File) : boolean
+}
+
+class AndPredicate {
+  - operands : List<Predicate>
+  + isMatch(File) : boolean
+}
+
+class OrPredicate {
+  - operands : List<Predicate>
+  + isMatch(File) : boolean
+}
+
+class NotPredicate {
+  - operand : Predicate
+  + isMatch(File) : boolean
+}
+
+' ========== Operators ==========
+interface "ComparisonOperator<T>" as ComparisonOperator {
+  + isMatch(T, T) : boolean
+}
+
+class EqualsOperator {
+  + isMatch(T, T) : boolean
+}
+
+class LessThanOperator {
+  + isMatch(T, T) : boolean
+}
+
+class GreaterThanOperator {
+  + isMatch(T, T) : boolean
+}
+
+class RegexMatchOperator {
+  + isMatch(T, T) : boolean
+}
+
+' ========== Search ==========
+class FileSearchCriteria {
+  - predicate : Predicate
+  + isMatch(File) : boolean
+}
+
+class FileSearch {
+  + search(File, FileSearchCriteria) : List<File>
+}
+
+' ========== Relationships ==========
+Predicate <|.. SimplePredicate
+Predicate <|.. CompositePredicate
+CompositePredicate <|.. AndPredicate
+CompositePredicate <|.. OrPredicate
+Predicate <|.. NotPredicate
+
+AndPredicate o-- "1..*" Predicate : operands
+OrPredicate o-- "1..*" Predicate : operands
+NotPredicate o-- Predicate : operand
+
+SimplePredicate o-- FileAttribute : attributeName
+SimplePredicate o-- ComparisonOperator : operator
+
+ComparisonOperator <|.. EqualsOperator
+ComparisonOperator <|.. LessThanOperator
+ComparisonOperator <|.. GreaterThanOperator
+ComparisonOperator <|.. RegexMatchOperator
+
+FileSearchCriteria o-- Predicate : predicate
+FileSearch ..> FileSearchCriteria : uses
+FileSearch ..> File : traverses
+
+@enduml

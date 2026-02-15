@@ -1,0 +1,59 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+class Player {
+  - name : String
+  - symbol : char
+  + getName() : String
+  + getSymbol() : char
+}
+
+class Board {
+  - grid : Player[][]
+  - size : int
+  + updateBoard(int, int, Player) : void
+  + getPlayerAt(int, int) : Player
+  + isFull() : boolean
+  + getWinner() : Optional<Player>
+  + reset(int) : void
+}
+
+class Move {
+  - rowIdx : int
+  - colIdx : int
+  - player : Player
+}
+
+class MoveHistory {
+  + recordMove(Move) : void
+}
+
+enum GameCondition {
+  IN_PROGRESS
+  ENDED
+}
+
+class Game {
+  - board : Board
+  - players : Player[]
+  - currentPlayerIndex : int
+  - moveHistory : MoveHistory
+  + startNewGame(Player, Player) : void
+  + makeMove(int, int, Player) : void
+  + getGameStatus() : GameCondition
+  + getWinner() : Player
+}
+
+' ========== Relationships ==========
+Board o-- "0..*" Player : grid
+Move o-- Player : player
+MoveHistory o-- "0..*" Move : moves
+Game o-- Board : board
+Game o-- "2" Player : players
+Game o-- MoveHistory : moveHistory
+Game ..> GameCondition : getGameStatus
+
+@enduml

@@ -1,0 +1,88 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+class LogMessage {
+  - timestamp : LocalDateTime
+  - level : LogLevel
+  - loggerName : String
+  - threadName : String
+  - message : String
+  + getTimestamp() : LocalDateTime
+  + getLevel() : LogLevel
+  + getLoggerName() : String
+  + getMessage() : String
+}
+
+' ========== Formatter ==========
+interface LogFormatter {
+  + format(LogMessage) : String
+}
+
+class SimpleTextFormatter {
+  + format(LogMessage) : String
+}
+
+' ========== Appender ==========
+interface LogAppender {
+  + append(LogMessage) : void
+}
+
+class ConsoleAppender {
+  - formatter : LogFormatter
+  + append(LogMessage) : void
+}
+
+' ========== Logger & Config ==========
+class Logger {
+  - name : String
+  - level : LogLevel
+  - appender : List<LogAppender>
+  + log(LogLevel, String) : void
+  + debug(String) : void
+  + info(String) : void
+  + warn(String) : void
+  + error(String) : void
+  + fatal(String) : void
+}
+
+class LoggerConfig {
+  - level : LogLevel
+  - appenders : List<LogAppender>
+  + getLevel() : LogLevel
+  + getAppenders() : List<LogAppender>
+}
+
+class LoggerFactory {
+  - config : LoggerConfig
+  - loggers : Map<String, Logger>
+  + getInstance() : LoggerFactory
+  + initialize(LoggerConfig) : void
+  + getLogger(String) : Logger
+}
+
+' ========== Relationships ==========
+LogFormatter <|.. SimpleTextFormatter
+LogAppender <|.. ConsoleAppender
+ConsoleAppender o-- LogFormatter : formatter
+
+Logger o-- "0..*" LogAppender : appenders
+Logger ..> LogMessage : creates
+
+LoggerConfig o-- "0..*" LogAppender : appenders
+LoggerConfig *-- LogLevel : level
+
+LoggerFactory o-- LoggerConfig : config
+LoggerFactory o-- "0..*" Logger : loggers
+
+@enduml

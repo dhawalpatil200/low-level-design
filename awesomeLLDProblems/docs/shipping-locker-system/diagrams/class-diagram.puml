@@ -1,0 +1,63 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+enum Size {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+class PackageSize {
+  - height : BigDecimal
+  - width : BigDecimal
+  - depth : BigDecimal
+  + getHeight() : BigDecimal
+  + getWidth() : BigDecimal
+  + getDepth() : BigDecimal
+}
+
+class Package {
+  - id : String
+  - packageSize : PackageSize
+  + getId() : String
+  + getPackageSize() : PackageSize
+}
+
+class Locker {
+  - size : Size
+  - aPackage : Package
+  + isOccupied() : boolean
+  + assignPackage(Package) : void
+  + markFree() : void
+  + getSize() : Size
+}
+
+class AccessToken {
+  - code : String
+  - expiration : Timestamp
+  - locker : Locker
+  + isExpired() : boolean
+  + getCode() : String
+  + getLocker() : Locker
+}
+
+class Site {
+  - lockers : List<Locker>
+  - accessTokenMap : Map<String, AccessToken>
+  + assignPackage(Package) : String
+  + pickup(String) : void
+}
+
+' ========== Relationships ==========
+Size ..> PackageSize : dimensions
+Package o-- PackageSize : packageSize
+Locker *-- Size : size
+Locker o-- "0..1" Package : aPackage
+AccessToken o-- Locker : locker
+Site o-- "1..*" Locker : lockers
+Site o-- "0..*" AccessToken : accessTokenMap
+
+@enduml

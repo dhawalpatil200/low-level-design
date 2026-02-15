@@ -1,0 +1,172 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+class City {
+  - name : String
+  + getName() : String
+}
+
+class Movie {
+  - title : String
+  - genre : String
+  - durationInMinutes : Duration
+  + getTitle() : String
+  + getGenre() : String
+  + getDuration() : Duration
+}
+
+interface PricingStrategy {
+  + getPrice() : BigDecimal
+}
+
+class NormalRate {
+  + getPrice() : BigDecimal
+}
+
+class Seat {
+  - seatNumber : String
+  - pricingStrategy : PricingStrategy
+  + getSeatNumber() : String
+  + getPricingStrategy() : PricingStrategy
+}
+
+class Layout {
+  - rows : int
+  - columns : int
+  - seatByNumber : Map<String, Seat>
+  - seatByPosition : Map<Integer, Map<Integer, Seat>>
+  + getAllSeats() : List<Seat>
+  + getSeatByNumber(String) : Seat
+  + getSeatByPosition(int, int) : Seat
+}
+
+class Room {
+  - roomNumber : String
+  - layout : Layout
+  + getRoomNumber() : String
+  + getLayout() : Layout
+}
+
+class Cinema {
+  - name : String
+  - city : City
+  - rooms : List<Room>
+  + addRoom(Room) : void
+  + getCity() : City
+  + getRooms() : List<Room>
+}
+
+enum SeatStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+}
+
+class ScreeningSeat {
+  - seat : Seat
+  - seatStatus : SeatStatus
+  - holdExpiryTime : LocalDateTime
+  - holdToken : String
+  + hold(int) : String
+  + isAvailable() : boolean
+  + confirmBooking(String) : boolean
+  + getSeat() : Seat
+}
+
+class Screening {
+  - movie : Movie
+  - room : Room
+  - startTime : LocalDateTime
+  - duration : Duration
+  - seats : Map<String, ScreeningSeat>
+  + getAvailableSeats() : List<Seat>
+  + getScreeningSeat(String) : ScreeningSeat
+  + getDate() : LocalDate
+  + getMovie() : Movie
+  + getRoom() : Room
+}
+
+class BookingSession {
+  - screening : Screening
+  - seat : Seat
+  - holdToken : String
+  + getScreening() : Screening
+  + getSeat() : Seat
+  + getHoldToken() : String
+}
+
+class Ticket {
+  - screening : Screening
+  - seat : Seat
+  - price : BigDecimal
+  + getScreening() : Screening
+  + getSeat() : Seat
+  + getPrice() : BigDecimal
+}
+
+' ========== Delegates ==========
+class ScreeningManager {
+  - screeningsByMovie : Map<Movie, List<Screening>>
+  + addScreening(Movie, Screening) : void
+  + findScreening(Movie, City, LocalDate, List<Cinema>) : List<Screening>
+  + getAvailableSeats(Screening) : List<Seat>
+}
+
+class PaymentService {
+  + pay(BigDecimal) : boolean
+}
+
+class BookingService {
+  - screeningManager : ScreeningManager
+  - paymentService : PaymentService
+  - cinemas : List<Cinema>
+  + searchShows(Movie, City, LocalDate) : List<Screening>
+  + getAvailableSeats(Screening) : List<Seat>
+  + selectSeat(Screening, Seat) : BookingSession
+  + confirmBooking(BookingSession) : Ticket
+}
+
+class MovieBookingSystem {
+  - movies : List<Movie>
+  - cinemas : List<Cinema>
+  - bookingService : BookingService
+  + addMovie(Movie) : void
+  + addCinema(Cinema) : void
+  + getCinemasInCity(City) : List<Cinema>
+  + searchShows(Movie, City, LocalDate) : List<Screening>
+  + getAvailableSeats(Screening) : List<Seat>
+  + selectSeat(Screening, Seat) : BookingSession
+  + confirmBooking(BookingSession) : Ticket
+}
+
+' ========== Relationships ==========
+PricingStrategy <|.. NormalRate
+Seat o-- PricingStrategy : pricingStrategy
+Layout o-- "0..*" Seat : seats
+Room o-- Layout : layout
+Cinema o-- City : city
+Cinema o-- "0..*" Room : rooms
+
+ScreeningSeat o-- Seat : seat
+ScreeningSeat *-- SeatStatus : seatStatus
+Screening o-- Movie : movie
+Screening o-- Room : room
+Screening o-- "0..*" ScreeningSeat : seats
+
+BookingSession o-- Screening : screening
+BookingSession o-- Seat : seat
+Ticket o-- Screening : screening
+Ticket o-- Seat : seat
+
+ScreeningManager o-- "0..*" Screening : screeningsByMovie
+BookingService o-- ScreeningManager : screeningManager
+BookingService o-- PaymentService : paymentService
+BookingService o-- "0..*" Cinema : cinemas
+MovieBookingSystem o-- "0..*" Movie : movies
+MovieBookingSystem o-- "0..*" Cinema : cinemas
+MovieBookingSystem o-- BookingService : bookingService
+
+@enduml
