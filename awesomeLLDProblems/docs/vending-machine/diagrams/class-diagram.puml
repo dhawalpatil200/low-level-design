@@ -1,0 +1,111 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+class Product {
+}
+
+class Rack {
+  - rackCode : String
+  - product : Product
+  - count : int
+  + getRackCode() : String
+  + getProduct() : Product
+  + getCount() : int
+  + decrement() : void
+}
+
+class MachineContext {
+  - product : Product
+  - rack : Rack
+  - amount : BigDecimal
+  + getProduct() : Product
+  + setProduct(Product) : void
+  + getRack() : Rack
+  + setRack(Rack) : void
+  + getAmount() : BigDecimal
+  + addAmount(BigDecimal) : void
+  + reset() : void
+}
+
+class InventoryManager {
+  + getRack(String) : Rack
+}
+
+' ========== State ==========
+abstract class VendingMachineState {
+  # vendingMachine : VendingMachine
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+}
+
+class IdleState {
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+}
+
+class HasProductState {
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+}
+
+class ReadyToDispenseState {
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+}
+
+class DispensingState {
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+}
+
+class VendingMachine {
+  - inventoryManager : InventoryManager
+  - context : MachineContext
+  - idleState : VendingMachineState
+  - hasProductState : VendingMachineState
+  - readyToDispenseState : VendingMachineState
+  - dispensingState : VendingMachineState
+  - currentState : VendingMachineState
+  + selectProduct(String) : void
+  + insertMoney(BigDecimal) : void
+  + dispense() : void
+  + cancel() : void
+  + setIdleState() : void
+  + setHasProductState() : void
+  + setReadyToDispenseState() : void
+  + setDispensingState() : void
+  + refund() : void
+  + reset() : void
+  + getInventoryManager() : InventoryManager
+  + getContext() : MachineContext
+}
+
+' ========== Relationships ==========
+Rack o-- Product : product
+MachineContext o-- Product : product
+MachineContext o-- Rack : rack
+
+VendingMachineState <|-- IdleState
+VendingMachineState <|-- HasProductState
+VendingMachineState <|-- ReadyToDispenseState
+VendingMachineState <|-- DispensingState
+
+VendingMachine o-- InventoryManager : inventoryManager
+VendingMachine o-- MachineContext : context
+VendingMachine o-- VendingMachineState : currentState
+VendingMachineState o-- VendingMachine : vendingMachine
+
+@enduml

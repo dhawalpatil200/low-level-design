@@ -1,0 +1,97 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+
+' ========== Entities ==========
+enum VehicleSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+interface Vehicle {
+  + getLicencePlateNumber() : String
+  + getSize() : VehicleSize
+}
+
+class MotorCycle {
+  + getLicencePlateNumber() : String
+  + getSize() : VehicleSize
+}
+
+interface ParkingSpot {
+  + isAvailable() : boolean
+  + occupy(Vehicle) : void
+  + vacate() : void
+  + getSpotNumber() : int
+  + getSize() : VehicleSize
+}
+
+class CompactParkingSpot {
+  - spotNumber : int
+  + isAvailable() : boolean
+  + occupy(Vehicle) : void
+  + vacate() : void
+  + getSpotNumber() : int
+  + getSize() : VehicleSize
+}
+
+class Ticket {
+  - ticketId : String
+  - vehicle : Vehicle
+  - parkingSpot : ParkingSpot
+  - entryTime : LocalDateTime
+  - exitTime : LocalDateTime
+  + calculateParkingDuration() : BigDecimal
+  + getVehicle() : Vehicle
+  + getExitTime() : LocalDateTime
+  + setExitTime(LocalDateTime) : void
+}
+
+' ========== Manager & Fare ==========
+class ParkingManager {
+  - availableSpots : Map<VehicleSize, List<ParkingSpot>>
+  - vehicleToSpotMap : Map<Vehicle, ParkingSpot>
+  + findSpotForVehicle(Vehicle) : ParkingSpot
+  + parkVehicle(Vehicle) : ParkingSpot
+  + unparkVehicle(Vehicle) : void
+}
+
+interface FareStrategy {
+  + calculateFare(Ticket, BigDecimal) : BigDecimal
+}
+
+class BaseFareStrategy {
+  + calculateFare(Ticket, BigDecimal) : BigDecimal
+}
+
+class FareCalculator {
+  - fareStrategies : List<FareStrategy>
+  + calculateFare(Ticket) : BigDecimal
+}
+
+class ParkingLot {
+  - parkingManager : ParkingManager
+  - fareCalculator : FareCalculator
+  + enterVehicle(Vehicle) : Ticket
+  + leaveVehicle(Ticket) : void
+}
+
+' ========== Relationships ==========
+Vehicle <|.. MotorCycle
+ParkingSpot <|.. CompactParkingSpot
+CompactParkingSpot *-- VehicleSize : size
+Ticket o-- Vehicle : vehicle
+Ticket o-- ParkingSpot : parkingSpot
+
+ParkingManager o-- "0..*" ParkingSpot : availableSpots
+ParkingManager o-- Vehicle : vehicleToSpotMap
+
+FareStrategy <|.. BaseFareStrategy
+FareCalculator o-- "1..*" FareStrategy : fareStrategies
+
+ParkingLot o-- ParkingManager : parkingManager
+ParkingLot o-- FareCalculator : fareCalculator
+
+@enduml
