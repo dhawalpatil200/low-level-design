@@ -105,49 +105,15 @@ package "exception" {
  class InventoryManagementDemo <<main>>
 
 
-' Facade relationships
-Ims "1" o-- "*" Warehouse : manages
-Ims "1" o-- "*" Product : registers
-Ims "1" o-- "*" InventoryObserver : notifies
-Ims --> LowStockAlertService : configures alerts
+' Has-a relationships
+Ims "1" o-- "*" Warehouse
+Ims "1" o-- "*" Product
+Ims "1" o-- "*" InventoryObserver
+Ims "1" o-- "1" LowStockAlertService
+LowStockObserver "1" o-- "1" LowStockAlertService
 
-' Domain relationships
-Warehouse ..> Product : productId identifies stock
-StockChange --> TransactionType
-StockChange ..> Product
-StockMovement ..> Product
-
-' Observer pattern
-InventoryObserver <|.. StockAuditObserver
-InventoryObserver <|.. LowStockObserver
-
-LowStockObserver --> LowStockAlertService : checks thresholds
-
-' Exceptions
-Ims ..> ImsException : throws
-Warehouse ..> ImsException : throws
-LowStockAlertService ..> ImsException : throws
-
-' Demo wiring
-InventoryManagementDemo ..> Ims : creates and uses
-InventoryManagementDemo ..> StockAuditObserver : registers
-InventoryManagementDemo ..> LowStockObserver : registers
-InventoryManagementDemo ..> LowStockAlertService : creates
-
-note right of Ims
-  Central entry point for inventory operations.
-  Validates IDs, updates stock and publishes
-  stock-change events to observers.
-end note
-
-note right of LowStockObserver
-  Checks stock levels after normal updates
-  and for both warehouses after a transfer.
-end note
-
-note bottom of LowStockAlertService
-  Stores configured thresholds per
-  product and warehouse.
-end note
+' Implements relationships
+StockAuditObserver ..|> InventoryObserver
+LowStockObserver ..|> InventoryObserver
 
 @enduml
