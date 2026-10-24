@@ -1,0 +1,153 @@
+
+@startuml
+title Inventory Management System - Class Diagram
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+
+class Ims <<Facade>> {
+    - warehouseMap : Map<String, Warehouse>
+    - productMap : Map<String, Product>
+    - observers : List<InventoryObserver>
+    - alertService : LowStockAlertService
+
+    + Ims(observers, alertService)
+    + addWarehouse(warehouse) : void
+    + registerProduct(product) : void
+    + addProduct(productId, warehouseId, initialQty) : void
+    + addStockInWarehouse(productId, warehouseId, quantity) : void
+    + removeStockFromWarehouse(productId, warehouseId, quantity) : void
+    + moveStockAcrossWarehouse(productId, fromId, toId, quantity) : void
+    + getStockCount(productId, warehouseId) : int
+    + addStockAlert(productId, warehouseId, threshold) : void
+    - assertValidProduct(productId) : void
+    - assertValidWarehouse(warehouseId) : void
+    - notifyStockUpdate(change) : void
+    - notifyStockMovement(movement) : void
+}
+
+package "entities" {
+    class Product {
+        - id : String
+        - name : String
+        + Product(id, name)
+        + getId() : String
+    }
+
+    class Warehouse {
+        - warehouseId : String
+        - inventory : Map<String, Integer>
+        + addStock(productId, quantity) : void
+        + removeStock(productId, quantity) : void
+        + getStockCount(productId) : int
+    }
+
+    enum TransactionType {
+        ADD
+        REMOVE
+        TRANSFER
+    }
+
+    class StockChange <<record>> {
+        + transactionType : TransactionType
+        + warehouseId : String
+        + productId : String
+        + quantityChanged : int
+        + previousStock : int
+        + currentStock : int
+    }
+
+    class StockMovement <<record>> {
+        + productId : String
+        + fromWarehouseId : String
+        + toWarehouseId : String
+        + quantity : int
+        + sourceStockBefore : int
+        + sourceStockAfter : int
+        + destinationStockBefore : int
+        + destinationStockAfter : int
+    }
+}
+
+package "observers" {
+    interface InventoryObserver {
+        + onStockUpdate(change : StockChange) : void
+        + onStockMovement(movement : StockMovement) : void
+    }
+
+    class StockAuditObserver {
+        + onStockUpdate(change : StockChange) : void
+        + onStockMovement(movement : StockMovement) : void
+    }
+
+    class LowStockObserver {
+        - lowStockAlertService : LowStockAlertService
+        + LowStockObserver(alertService)
+        + onStockUpdate(change : StockChange) : void
+        + onStockMovement(movement : StockMovement) : void
+    }
+}
+
+package "services" {
+    class LowStockAlertService {
+        - alertMap : Map<String, Integer>
+        + checkLowStock(productId, warehouseId, quantity) : void
+        + addStockAlert(productId, warehouseId, threshold) : void
+    }
+}
+
+package "exception" {
+    class ImsException <<RuntimeException>>
+}
+
+
+ class InventoryManagementDemo <<main>>
+
+
+' Facade relationships
+Ims "1" o-- "*" Warehouse : manages
+Ims "1" o-- "*" Product : registers
+Ims "1" o-- "*" InventoryObserver : notifies
+Ims --> LowStockAlertService : configures alerts
+
+' Domain relationships
+Warehouse ..> Product : productId identifies stock
+StockChange --> TransactionType
+StockChange ..> Product
+StockMovement ..> Product
+
+' Observer pattern
+InventoryObserver <|.. StockAuditObserver
+InventoryObserver <|.. LowStockObserver
+
+LowStockObserver --> LowStockAlertService : checks thresholds
+
+' Exceptions
+Ims ..> ImsException : throws
+Warehouse ..> ImsException : throws
+LowStockAlertService ..> ImsException : throws
+
+' Demo wiring
+InventoryManagementDemo ..> Ims : creates and uses
+InventoryManagementDemo ..> StockAuditObserver : registers
+InventoryManagementDemo ..> LowStockObserver : registers
+InventoryManagementDemo ..> LowStockAlertService : creates
+
+note right of Ims
+  Central entry point for inventory operations.
+  Validates IDs, updates stock and publishes
+  stock-change events to observers.
+end note
+
+note right of LowStockObserver
+  Checks stock levels after normal updates
+  and for both warehouses after a transfer.
+end note
+
+note bottom of LowStockAlertService
+  Stores configured thresholds per
+  product and warehouse.
+end note
+
+@enduml
