@@ -1,0 +1,54 @@
+
+@startuml
+title Payment Gateway - Class Diagram
+
+skinparam classAttributeIconSize 0
+hide members
+
+' Entities
+class PaymentRequest
+class PaymentResponse
+class Transaction
+
+' Enums
+enum PaymentMethod
+enum PaymentStatus
+
+' Observers
+interface PaymentObserver
+class MerchantNotifier
+class CustomerNotifier
+
+' Processors
+interface PaymentProcessor
+abstract class AbstractTemplatePaymentProcessor
+class CreditCardPaymentProcessor
+class UPIPaymentProcessor
+class PaypalPaymentProcessor
+class PaymentProcessorFactory
+
+' Service
+class PaymentGatewayService
+
+' Has-a relationships
+Transaction --> PaymentRequest
+Transaction --> PaymentStatus
+PaymentRequest --> PaymentMethod
+PaymentResponse --> PaymentStatus
+PaymentGatewayService o-- PaymentObserver
+
+' Implements relationships
+MerchantNotifier ..|> PaymentObserver
+CustomerNotifier ..|> PaymentObserver
+AbstractTemplatePaymentProcessor ..|> PaymentProcessor
+
+' Is-a relationships
+CreditCardPaymentProcessor --|> AbstractTemplatePaymentProcessor
+UPIPaymentProcessor --|> AbstractTemplatePaymentProcessor
+PaypalPaymentProcessor --|> AbstractTemplatePaymentProcessor
+
+' Factory dependency
+PaymentProcessorFactory ..> PaymentProcessor
+PaymentGatewayService ..> PaymentProcessorFactory
+
+@enduml
