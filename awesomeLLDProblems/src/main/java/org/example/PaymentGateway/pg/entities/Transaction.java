@@ -22,4 +22,13 @@ public class Transaction {
     public String getId() { return id; }
     public PaymentStatus getStatus() { return status; }
     public PaymentRequest getRequest() { return request; }
+
+    // atomic read-check-write guards the whole transition
+    public synchronized boolean transitionTo(PaymentStatus next, PaymentStatus expected) {
+        if (status != expected) {
+            return false; // someone else already moved this transaction
+        }
+        status = next;
+        return true;
+    }
 }
